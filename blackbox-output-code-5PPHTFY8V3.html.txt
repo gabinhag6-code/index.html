@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🎭 Abre Alas que Eu Quero Provar! — Carnaval Químico</title>
+<style>
+  :root{ --bg:linear-gradient(180deg,#fff8fb,#ffe6f0); --accent:#ff0066; --gold:#ffcc00; --green:#00a65a; --card:#ffffffcc; }
+  body{ margin:0; font-family:Inter, system-ui, Arial; background:var(--bg); color:#222; }
+  header{padding:18px; text-align:center; background:radial-gradient(circle at 10% 10%, #fff2f7, #ffdff0); box-shadow:0 4px 14px rgba(0,0,0,0.06)}
+  h1{margin:0;font-size:1.4rem}
+  .sub{color:#333; margin-top:6px; font-size:0.95rem}
+  main{max-width:980px;margin:18px auto;padding:12px}
+  .panel{background:var(--card); padding:14px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+  .row{display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap}
+  .left{flex:1 1 600px}
+  .right{width:320px}
+  .pergunta{font-weight:700; font-size:1.15rem; margin:8px 0}
+  .alternativas{display:flex; flex-direction:column; gap:10px}
+  button.alt{background:linear-gradient(90deg,#ff9ac8,#ff6aa6); border:none;color:#fff;padding:12px;border-radius:10px;font-size:1rem;cursor:pointer;box-shadow:0 6px 12px rgba(255,105,180,0.14)}
+  .controls{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+  .btn{background:linear-gradient(90deg,var(--accent),#ff3b8a); color:#fff;border:none;padding:10px 12px;border-radius:10px;cursor:pointer}
+  .small{padding:8px}
+  .timerbar{height:12px;background:#eee;border-radius:999px;overflow:hidden;margin-top:8px}
+  .timerbar > i{display:block;height:12px;background:linear-gradient(90deg,var(--gold),var(--accent)); width:100%}
+  .gif-row{display:flex;gap:8px;justify-content:center;margin:10px 0}
+  .gif-row img{width:86px;height:56px;object-fit:cover;border-radius:8px}
+  input.player{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+  .ranking li{background:#fff;padding:8px;border-radius:8px;margin-bottom:6px}
+  footer{margin-top:14px;text-align:center;color:#555;font-size:0.9rem}
+  .msg{font-weight:700;margin-top:8px}
+  canvas.conf{position:fixed;left:0;top:0;pointer-events:none;width:100%;height:100%;z-index:4}
+</style>
+</head>
+<body>
+<canvas class="conf" id="confetti"></canvas>
+<header>
+  <h1>🎭 Abre Alas que Eu Quero Provar! — Carnaval Químico</h1>
+  <div class="sub">Tema: Álcool e Ácido Carboxílico — Aprenda sambando! 💃🧪</div>
+  <div class="gif-row">
+    <img src="https://media.tenor.com/2J_ZK0FhXgQAAAAd/carnival-dance.gif" alt="carnaval" onerror="this.style.display='none'">
+    <img src="https://media.tenor.com/4l1b2d4vVuoAAAAC/confetti.gif" alt="confetti" onerror="this.style.display='none'">
+  </div>
+</header>
+
+<main>
+  <div class="panel row">
+    <section class="left">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div>Escola / Feira: <strong id="schoolName">—</strong></div>
+          <div>Jogador: <strong id="playerNameDisplay">—</strong></div>
+          <div>Pontuação: <strong id="score">0</strong></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.9rem">Pergunta <span id="qIdx">0</span>/<span id="qTot">0</span></div>
+          <div class="timerbar"><i id="timerBar" style="width:100%"></i></div>
+          <div style="font-weight:700;margin-top:6px"><span id="timeLeft">30</span>s</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div class="pergunta" id="question">Clique em Iniciar para começar!</div>
+        <div class="alternativas" id="answers"></div>
+        <div class="msg" id="messageArea"></div>
+
+        <div class="controls">
+          <button id="startBtn" class="btn">Iniciar jogo 🎉</button>
+          <button id="restartBtn" class="btn small" style="display:none">Reiniciar 🔁</button>
+          <button id="playBtn" class="btn small">▶️ Tocar marchinha</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div style="margin-bottom:10px">
+        <label><strong>Nome da escola / feira</strong></label>
+        <input id="schoolInput" placeholder="Ex.: Escola Municipal Sol Nascente" class="player"/>
+        <label style="display:block;margin-top:8px"><strong>Nome do jogador</strong></label>
+        <input id="playerInput" placeholder="Digite seu nome..." class="player"/>
+        <button id="saveNames" class="btn" style="margin-top:8px">Salvar nomes</button>
+      </div>
+
+      <div style="margin-top:10px" class="panel">
+        <strong>Cartas coletadas</strong>
+        <ul id="cards" style="padding-left:16px;margin-top:8px">
+          <li>Álcool: <span id="cAlc">0</span></li>
+          <li>Ácido: <span id="cAcid">0</span></li>
+          <li>Éster: <span id="cEster">0</span></li>
+          <li>Água: <span id="cWater">0</span></li>
+        </ul>
+      </div>
+
+      <div style="margin-top:10px" class="panel">
+        <strong>Ranking (local)</strong>
+        <ol id="rankList" style="margin-top:8px;padding-left:18px"></ol>
+        <button id="clearRank" class="btn small" style="margin-top:8px">Limpar ranking</button>
+      </div>
+    </aside>
+  </div>
+
+  <div style="margin-top:14px" class="panel">
+    <strong>Contexto rápido</strong>
+    <p>Álcoois: –OH | Ácidos carboxílicos: –COOH. Quando reagem, formam Éster + Água — compostos com cheiros e sabores! 🍓</p>
+    <p>Mensagens: "Arrasou, folião químico!", "Continue sambando no conhecimento!", "Você brilhou como um éster de carnaval!"</p>
+  </div>
+
+  <footer>
+    Dica: toque em "▶️ Tocar marchinha" para ouvir a música de carnaval 🎵
+  </footer>
+</main>
+
+<script>
+console.log("Script carregado!"); // Debug: Confirma se o JS está rodando
+const MUSIC_URL = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_187a8f969a.mp3?filename=carnival-marchinha-10931.mp3"; 
+const MUSIC_VOLUME = 0.5; 
+const perguntas = [
+  {q:"Qual é o grupo funcional do álcool?", a:["–OH","–COOH","–NH₂"], c:0},
+  {q:"Qual é o grupo funcional do ácido carboxílico?", a:["–OH","–COOH","–CHO"], c:1},
+  {q:"O que se forma quando um álcool reage com um ácido carboxílico?", a:["Éster","Amida","Aldeído"], c:0},
+  {q:"O etanol é um tipo de:", a:["Álcool","Ácido","Éster"], c:0},
+  {q:"O ácido acético está presente em:", a:["Vinagre","Perfume","Açúcar"], c:0},
+  {q:"Qual dos itens é exemplo de ácido carboxílico?", a:["Ácido acético","Etanol","Propanona"], c:0},
+  {q:"Qual grupo confere sabor azedo às frutas?", a:["–COOH","–OH","–NH₂"], c:0}
+];
+let idx=0, score=0, timer=30, tid=null;
+let cards={alcohol:0,acid:0,ester:0,water:0}; let player="",school="";
+const qTot=perguntas.length;
+const el=(id)=>document.getElementById(id);
+const els={qTot:el("qTot"),qIdx:el("qIdx"),q:el("question"),a:el("answers"),msg:el("messageArea"),start:el("startBtn"),restart:el("restartBtn"),play:el("playBtn"),score:el("score"),time:el("timeLeft"),bar:el("timerBar"),pInput:el("playerInput"),sInput:el("schoolInput"),save:el("saveNames"),pName:el("playerNameDisplay"),sName:el("schoolName"),rank:el("rankList"),clear:el("clearRank"),cA:el("cAlc"),cAc:el("cAcid"),cE:el("cEster"),cW:el("cWater")};
+els.qTot.textContent=qTot; let audio=null;
+async function setupAudio(){try{audio=new Audio(MUSIC_URL);audio.loop=true;audio.volume=MUSIC_VOLUME;await audio.play().then(()=>els.play.textContent="⏸️ Parar marchinha").catch((e)=>{console.error("Erro no áudio:", e); els.play.textContent="▶️ Tocar marchinha";});}catch(e){console.error("Erro ao configurar áudio:", e); els.play.textContent="▶️ Tocar marchinha";}}
+els.play.addEventListener("click",async()=>{console.log("Botão play clicado"); if(!audio){await setupAudio();return;} if(audio.paused){await audio.play();els.play.textContent="⏸️ Parar marchinha";}else{audio.pause();els.play.textContent="▶️ Tocar marchinha";}});
+function renderAnswers(p){els.a.innerHTML="";p.a.forEach((alt,i)=>{const b=document.createElement("button");b.className="alt";b.textContent=`${["A","B","C"][i]} — ${alt}`;b.onclick=()=>handle(i);els.a.appendChild(b);});}
+function start(){console.log("Botão start clicado"); if(!player){alert("Salve o nome do jogador antes!");return;}idx=0;score=0;cards={alcohol:0,acid:0,ester:0,water:0};els.score.textContent=score;els.start.style.display="none";els.restart.style.display="inline-block";show(); updateRankings(); confetti();} // Added confetti on start
+function show(){if(idx>=perguntas.length)return end();els.qIdx.textContent=idx+1;els.q.textContent=perguntas[idx].q;renderAnswers(perguntas[idx]);timer=30;els.time.textContent=timer;els.bar.style.width="100%";clearInterval(tid);tid=setInterval(()=>{timer--;els.time.textContent=timer;els.bar.style.width=(timer/30*100)+"%";if(timer<=0){clearInterval(tid);msg("⏰ Tempo esgotado! Pegue uma bala azeda.","#b00020");idx++;setTimeout(show,1200);}},1000);}
+function msg(t,c){els.msg.style.color=c;els.msg.textContent=t;}
+function handle(ch){clearInterval(tid);const c=perguntas[idx].c;if(ch===c){score+=10;els.score.textContent=score;["alcohol","acid","ester","water"][idx%4]&&cards[["alcohol","acid","ester","water"][idx%4]]++;msg("✅ Arrasou, folião químico! 🎉","#007a1f");confetti();}else msg("❌ Quase lá — continue sambando! 💃","#b00020");setTimeout(()=>{idx++;show();},1000);}
+function end(){els.q.textContent=`Fim! Você fez ${score} pontos.`;els.a.innerHTML="";let m=score>=70?"✨ Você brilhou como um éster de carnaval! ✨":score>=40?"🎊 Continue sambando no conhecimento!":"😅 Continue praticando — você consegue!";els.msg.innerHTML=m;els.start.style.display="inline-block"; updateRankings(); confetti();} // Added confetti on end
+els.save.onclick=()=>{school=els.sInput.value.trim();player=els.pInput.value.trim();if(!player){alert("Digite o nome do jogador.");return;}els.sName.textContent=school||"—";els.pName.textContent=player; console.log("Nomes salvos:", player, school);};
+els.restart.onclick=()=>{if(confirm("Reiniciar?"))start();};
+els.clear.onclick=()=>{if(confirm("Limpar ranking?")){localStorage.removeItem("ranking");updateRankings();}};
+// Ranking functions
+function updateRankings(){const r=JSON.parse(localStorage.getItem("ranking"))||[];r.push({name:player,score:score});r.sort((a,b)=>b.score-a.score);localStorage.setItem("ranking",JSON.stringify(r.slice(0,10)));els.rank.innerHTML="";r.forEach((e,i)=>els.rank.innerHTML+=`<li>${i+1}. ${e.name}: ${e.score} pts</li>`);}
+// Confetti function (simple canvas animation)
+function confetti(){const c=el("confetti");const ctx=c.getContext("2d");c.width=window.innerWidth;c.height=window.innerHeight;let p=[];for(let i=0;i<100;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-0.5)*4,vy:Math.random()*4+2,c:`hsl(${Math.random()*360},100%,50%)`});function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(e=>{e.y+=e.vy;e.x+=e.vx;if(e.y>c.height)p.splice(p.indexOf(e),1);ctx.fillStyle=e.c;ctx.fillRect(e.x,e.y,4,4);});if(p.length)requestAnimationFrame(draw);}draw();setTimeout(()=>{ctx.clearRect(0,0,c.width,c.height);},3000);}
+window.onload=()=>{console.log("Página carregada"); setupAudio(); updateRankings();};
+</script>
+</body>
+</html>
